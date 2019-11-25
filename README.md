@@ -1,7 +1,7 @@
-## ESPA-PRODUCT_FORMATTER Version 1.18.0 Release Notes
-Release Date: July 2019
+## ESPA-PRODUCT_FORMATTER Version 1.19.0 Release Notes
+Release Date: November 2019
 
-The product formatter project contains libraries and tools for working with the ESPA internal file format (raw binary with an XML metadata file). It currently supports Landsat 4-8.
+The product formatter project contains libraries and tools for working with the ESPA internal file format (raw binary with an XML metadata file). It currently supports Landsat 4-8, Sentinel-2 L1C, and limited MODIS products.
 
 ### Support Information
 This project is unsupported software provided by the U.S. Geological Survey (USGS) Earth Resources Observation and Science (EROS) Land Satellite Data Systems (LSDS) Project. For questions regarding products produced by this source code, please contact us at custserv@usgs.gov.
@@ -14,7 +14,7 @@ espa-product-formatter source code
 
     git clone https://github.com/USGS-EROS/espa-product-formatter.git
 
-See git tag [version_1.18.0]
+See git tag [version_1.19.0]
 
 ### Dependencies
   * GCTP libraries (obtained from the GCTP directory in the HDF-EOS2 source code)
@@ -124,18 +124,15 @@ be needed for your application or other espa product formatter libraries may nee
 
 
 ## Release Notes
-  * Added support for Sentinel-2 Level-1C products.
-  * Added view angles (similar to the solar angles) to the schema and output
-    XML file, in support of the Sentinel-2 products.
-  * Fixed a bug when using strdup to copy the HDF5 VIIRS filename to the
-    output XML filename, then blowing past the memory by changing the .h5
-    file extension to .xml.
-  * Fixed a bug in the MODIS support of obtaining the tile number from the file
-    name to populate the htile, vtile in the global XML file.
-  * Modified the angle band routines to detect if the angle bands have been
-    previously generated.  If so, then the bands are not regenerated.  This
-    is a fix for calling LaSRC followed by LaORCA and having two different
-    listings of the angle bands in the XML file.  When converting the ESPA
-    format to another format, both listings will attempt to be converted.  The
-    second listing could fail if remove source files is used for the conversion
-    because the files are removed after converting the first listing.
+  * Cleaned up some warning codes flagged after migrating to a newer system.
+  * Fixed a bug in parse_sentinel_metadata.c.  Prodtype is a character
+    pointer and not an array, therefore using the size of the pointer is not
+    valid when used as an argument in sizeof.
+  * Added a script for unpackaging the Sentinel-2 product bundles so they are
+    in the proper format for ingesting via convert_sentinel_to_espa.
+  * Updated the python metadata library to use the version 2.2 schema. 
+  * Modified the unpackage script to support both old and new Sentinel-2
+    package formats.
+  * Developed a filename convention for ESPA's version of the Sentinel-2
+    products and the conversion of Sentinel to ESPA writes the output bands
+    using this filename convention.

@@ -14,18 +14,74 @@ NOTES:
      metadata format found in ESPA Raw Binary Format v1.0.doc.  The schema for
      the ESPA internal metadata format is available at
      http://espa.cr.usgs.gov/schema/espa_internal_metadata_v1_x.xsd.
+  2. Sentinel-2 data has an older file/packaging format (prior to October 2016)
+     as well as the latest format.  Both are supported by this application.
+     Only S2A data will be in the old format, since S2B didn't come online
+     until March of 2017.
 *****************************************************************************/
 #include <unistd.h>
 #include <ctype.h>
+#include <dirent.h>
+#include <string.h>
 #include "convert_sentinel_to_espa.h"
 
-/* Band information for the Sentinel-2 L1C products */
+/* Band information for the Sentinel-2 L1C products. Ignore TCI (true color
+   image). */
 char sentinel_bands[NUM_SENTINEL_BANDS][STR_SIZE] =
     {"B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A",
-     "B09", "B10", "B11", "B12", "TCI"};
+     "B09", "B10", "B11", "B12"};
 char sentinel_band_nums[NUM_SENTINEL_BANDS][STR_SIZE] =
-    {"1", "2", "3", "4", "5", "6", "7", "8", "8A", "9", "10", "11", "12",
-     "TCI"};  /* TCI is true colour image */
+    {"1", "2", "3", "4", "5", "6", "7", "8", "8A", "9", "10", "11", "12"};
+
+/******************************************************************************
+MODULE:  read_dir
+
+PURPOSE: Read the current directory and look for the band 1 Sentinel-2 file.
+
+RETURN VALUE:
+Type = char *
+Value           Description
+-----           -----------
+NULL            Error reading the directory and successful find of band 1
+non-NULL        Band 1 filename was successfully found
+
+NOTES:
+******************************************************************************/
+char *read_dir ()
+{
+    char FUNC_NAME[] = "read_dir";  /* function name */
+    char errmsg[STR_SIZE];      /* error message */
+    char *b1_name = NULL;       /* band 1 Sentinel-2 filename */
+    DIR *dr = NULL;             /* ptr to current directory */
+    struct dirent *de = NULL;   /* ptr for directory entry */
+  
+    /* Open the current directory */
+    dr = opendir(".");
+    if (dr == NULL)
+    {
+        sprintf (errmsg, "Could not open current directory");
+        error_handler (true, FUNC_NAME, errmsg);
+        return (NULL);
+    }
+
+    /* Loop through the files in the directory */
+    while ((de = readdir (dr)) != NULL)
+    {
+        /* Is this band 1? */
+        if (strstr (de->d_name, "_B01.jp2"))
+        {
+            b1_name = de->d_name;
+            break;
+        }
+    }
+
+    /* Close the directory */
+    closedir (dr);
+
+    /* Return the band 1 name (or NULL if not found) */
+    return (b1_name);
+}
+
 
 /******************************************************************************
 MODULE:  rename_jp2
@@ -41,19 +97,89 @@ ERROR           Error renaming the JP2 files
 SUCCESS         Successfully renamed the JP2 files
 
 NOTES:
+The ESPA Sentinel filename convention (for both old and new S2 formats) is as
+follows: S2X_MSI_L1C_TTTTTT_ YYYYMMDD_yyyymmdd_CC_TX
+
+Where:
+  * X = A or B
+  * TTTTTT = Sentinel tile number (ex. T10TFR)
+  * YYYYMMDD = Acquisition year, month, day
+  * yyyymmdd = Processing year, month, day
+
+Example: S2A_MSI_L1C_T10TFR_20180816_20180903
+
 ******************************************************************************/
 int rename_jp2
 (
     Espa_internal_meta_t *xml_metadata /* I: valid ESPA metadata structure */
 )
 {
+    const int TILE_CHARS=6;  /* number of chars in the S2 tile name */
+    const int YEAR_CHARS=4;  /* number of chars in the year string */
+    const int MONTH_CHARS=2; /* number of chars in the month string */
+    const int DAY_CHARS=2;   /* number of chars in the day string */
+    const int DATE_CHARS=YEAR_CHARS+MONTH_CHARS+DAY_CHARS;
+                             /* number of chars in the date string */
     char FUNC_NAME[] = "rename_jp2";  /* function name */
-    char errmsg[STR_SIZE];    /* error message */
-    char newfile[STR_SIZE];   /* name of the new Sentinel file */
-    int i;                    /* looping variable for bands in XML file */
-    int count;                /* number of chars copied in snprintf */
+    char errmsg[STR_SIZE];      /* error message */
+    char newfile[STR_SIZE];     /* name of the new Sentinel file */
+    char acq_date[DATE_CHARS+1];  /* acquisition date */
+    char prod_date[DATE_CHARS+1]; /* production date */
+    char s2_tile[TILE_CHARS+1]; /* Sentinel tile */
+    char year[YEAR_CHARS+1];    /* acquisition or production year */
+    char month[MONTH_CHARS+1];  /* acquisition or production month */
+    char day[DAY_CHARS+1];      /* acquisition or production day */
+    char sat_x;                 /* A or B Sentinel satellite */
+    int i;                      /* looping variable for bands in XML file */
+    int count;                  /* number of chars copied in snprintf */
     Espa_band_meta_t *bmeta = NULL;  /* pointer to band metadata */
     Espa_global_meta_t *gmeta = &xml_metadata->global;  /* global metadata */
+
+    /* Get the satellite letter - A or B */
+    sat_x = gmeta->satellite[strlen(gmeta->satellite)-1];
+
+    /* Get the tile number, which is in different locations depending on
+       whether this is an old or new Sentinel-2 product */
+    if (!strncmp (gmeta->product_id, "S2", 2))
+    { /* old S2 format
+         (Ex. S2A_OPER_MSI_L1C_TL_SGS__20151231T122251_A002735_T34MFS) */
+        strncpy (s2_tile,
+                 &gmeta->product_id[strlen(gmeta->product_id)-TILE_CHARS],
+                 TILE_CHARS);
+    }
+    else
+    { /* new S2 format (Ex. T10TFR_20180816T185921) */
+        strncpy (s2_tile, gmeta->product_id, TILE_CHARS);
+    }
+    s2_tile[TILE_CHARS] = '\0';
+
+    /* Get the acquisition date, but remove the dashes */
+    strncpy (year, gmeta->acquisition_date, YEAR_CHARS);
+    year[YEAR_CHARS] = '\0';
+
+    strncpy (month, &gmeta->acquisition_date[YEAR_CHARS+1], MONTH_CHARS);
+    month[MONTH_CHARS] = '\0';
+
+    strncpy (day, &gmeta->acquisition_date[YEAR_CHARS+MONTH_CHARS+2],
+        DAY_CHARS);
+    day[DAY_CHARS] = '\0';
+    sprintf (acq_date, "%s%s%s", year, month, day);
+
+    /* Get the production date, but remove the dashes */
+    strncpy (year, gmeta->level1_production_date, YEAR_CHARS);
+    year[YEAR_CHARS] = '\0';
+
+    strncpy (month, &gmeta->level1_production_date[YEAR_CHARS+1], MONTH_CHARS);
+    month[MONTH_CHARS] = '\0';
+
+    strncpy (day, &gmeta->level1_production_date[YEAR_CHARS+MONTH_CHARS+2],
+        DAY_CHARS);
+    day[DAY_CHARS] = '\0';
+    sprintf (prod_date, "%s%s%s", year, month, day);
+
+    /* Generate the new product ID */
+    sprintf (gmeta->product_id, "S2%c_MSI_L1C_%s_%s_%s", sat_x, s2_tile,
+        acq_date, prod_date);
 
     /* Loop through the bands in the metadata file and convert each one to
        the ESPA format */
@@ -238,26 +364,34 @@ int convert_sentinel_to_espa
     char espa_xml_file[STR_SIZE];     /* output ESPA XML metadata filename */
     char jp2_file[STR_SIZE];          /* jp2 image file to delete */
     char sentinel_xml_file[STR_SIZE]; /* current Sentinel XML filename */
+    char orig_bandname[STR_SIZE];     /* original band1 filename */
+    char prodtype[STR_SIZE];          /* product type string for all bands */
+    char proc_ver[STR_SIZE];          /* processing ver string for all bands */
+    char l1_filename[STR_SIZE];       /* original level-1 filename for the
+                                         initial band to be used as base for
+                                         all bands */
+    char *b1_name = NULL;             /* band 1 Sentinel-2 filename */
     char *cptr = NULL;                /* pointer to the file extension */
+    float scale_factor;               /* scale factor for all bands */
     int i;                            /* looping variable */
     int count;                        /* number of chars copied in snprintf */
     Espa_internal_meta_t xml_metadata;  /* ESPA XML metadata structure to be
                                            populated by reading the Sentinel
                                            XML file */
-    Espa_global_meta_t *gmeta;  /* global metadata structure */
-    Espa_band_meta_t *bmeta;    /* band metadata pointer to all bands */
+    Espa_global_meta_t *gmeta = NULL; /* global metadata structure */
+    Espa_band_meta_t *bmeta = NULL;   /* band metadata pointer to all bands */
 
     /* Initialize the metadata structure */
     init_metadata_struct (&xml_metadata);
     gmeta = &xml_metadata.global;
 
     /* Read the Sentinel MTD_MSIL1C product XML file and populate our internal
-       ESPA metadata structure. The names of the image files/bands, the
-       acquisition date/time, product generation date/time, lat/long coords,
-       product type, and scale factor are all available in this XML file. */
+       ESPA metadata structure. The acquisition date/time, product generation
+       date/time, lat/long coords, product type, and scale factor are all
+       available in this XML file. */
     strcpy (sentinel_xml_file, "MTD_MSIL1C.xml");
-    if (parse_sentinel_product_metadata (sentinel_xml_file, &xml_metadata) !=
-        SUCCESS)
+    if (parse_sentinel_product_metadata (sentinel_xml_file, &xml_metadata,
+        prodtype, proc_ver, l1_filename, &scale_factor) != SUCCESS)
     {
         sprintf (errmsg, "Reading Sentinel product XML file: %s",
             sentinel_xml_file);
@@ -265,15 +399,49 @@ int convert_sentinel_to_espa
         return (ERROR);
     }
 
-    /* Make sure the number of bands that were found in the XML file matches
-       the expected number of Sentinel L1C bands */
-    if (xml_metadata.nbands != NUM_SENTINEL_BANDS)
+    /* Allocate band metadata */
+    if (allocate_band_metadata (&xml_metadata, NUM_SENTINEL_BANDS) != SUCCESS)
+    {   /* Error messages already printed */
+        return (ERROR);
+    }
+
+    /* Get the band 1 filename in the current directory */
+    b1_name = read_dir();
+    if (b1_name == NULL)
     {
-        sprintf (errmsg, "Number of bands read from %s (%d) does not match "
-            "the expected number of bands %d", sentinel_xml_file,
-            xml_metadata.nbands, NUM_SENTINEL_BANDS);
+        sprintf (errmsg, "Not able to find the Sentinel-2 band 1 file in "
+            "the current directory");
         error_handler (true, FUNC_NAME, errmsg);
         return (ERROR);
+    }
+
+    /* Strip off the band and jpeg 2000 file extension. Store this as the
+       product_id in the global metadata. */
+    cptr = strstr (b1_name, "_B01.jp2");
+    *cptr = '\0';
+    snprintf (gmeta->product_id, sizeof (gmeta->product_id), "%s",
+        (const char *) b1_name);
+    
+    /* Strip the band from the level-1 filename to get the basename */
+    cptr = strrchr (l1_filename, '_');
+    *cptr = '\0';
+
+    /* The filename, product type, app version, and scale factor need to be
+       added to the band metadata for each of the bands */
+    for (i = 0; i < xml_metadata.nbands; i++)
+    {
+        bmeta = &xml_metadata.band[i];
+        snprintf (bmeta->file_name, sizeof (bmeta->file_name), "%s_%s.jp2",
+            (const char *) b1_name, sentinel_bands[i]);
+        strcpy (bmeta->short_name, prodtype);
+        bmeta->scale_factor = 1.0 / scale_factor;
+        snprintf (bmeta->l1_filename, sizeof (bmeta->l1_filename), "%s_%s",
+            (const char *) l1_filename, sentinel_bands[i]);
+
+        /* Sentinel-2 XML files contain the processing baseline version, so
+           that will be used to keep track of the ESA PDGS version number */
+        sprintf (bmeta->app_version, "ESA Payload Data Ground Segment v%s",
+            proc_ver);
     }
 
     /* Read the Sentinel MTD_TL tile XML file and populate our internal ESPA
@@ -299,10 +467,6 @@ int convert_sentinel_to_espa
     /* Set the orientation angle to 0 */
     gmeta->orientation_angle = 0.0;
 
-    /* The last band in the product is a 3-band browse. That band will be
-       skipped from processing since it is not true science data. */
-    xml_metadata.nbands--;
-
     /* Update remaining information for band metadata for each of the bands */
     for (i = 0; i < xml_metadata.nbands; i++)
     {
@@ -319,10 +483,14 @@ int convert_sentinel_to_espa
         strcpy (bmeta->production_date, gmeta->level1_production_date);
         sprintf (bmeta->long_name, "band %s top-of-atmosphere reflectance",
             sentinel_band_nums[i]);
+    }
 
-        /* Sentinel XML files don't indicate the application used to process
-           the original image files, so set to "not available" */
-        strcpy (bmeta->app_version, "not available");
+    /* If the source data is going to get removed, then save the band 1
+       filename before it is renamed */
+    if (del_src)
+    {
+        bmeta = &xml_metadata.band[0];
+        strcpy (orig_bandname, bmeta->file_name);
     }
 
     /* Rename the current Sentinel JP2 bands to a new filename (using the
@@ -364,6 +532,7 @@ int convert_sentinel_to_espa
         /* Remove the image band */
         for (i = 0; i < xml_metadata.nbands; i++)
         {
+            /* Point to the band metadata for this band */
             bmeta = &xml_metadata.band[i];
 
             /* Remove the .jp2 files */
@@ -379,7 +548,7 @@ int convert_sentinel_to_espa
             strcpy (cptr, ".jp2");
 
             /* Remove the source file */
-            printf ("  Removing %s\n", jp2_file);
+            printf ("  Removing source JPEG2000 file: %s\n", jp2_file);
             if (unlink (jp2_file) != 0)
             {
                 sprintf (errmsg, "Deleting source file: %s", jp2_file);
@@ -388,35 +557,25 @@ int convert_sentinel_to_espa
             }
         }
 
-        /* Remove the TCI jp2 band */
-        bmeta = &xml_metadata.band[NUM_SENTINEL_BANDS-1];
-        printf ("  Removing %s\n", bmeta->file_name);
-        if (unlink (bmeta->file_name) != 0)
-        {
-            sprintf (errmsg, "Deleting source file: %s", bmeta->file_name);
-            error_handler (true, FUNC_NAME, errmsg);
-            return (ERROR);
-        }
-
-        /* Remove the TCI raw band */
-        count = snprintf (jp2_file, sizeof (jp2_file), "%s", bmeta->file_name);
+        /* Remove the TCI jp2 band, which retains its original filename. Only
+           exists in the new S2 format so don't error check if it fails. */
+        count = snprintf (jp2_file, sizeof (jp2_file), "%s", orig_bandname);
         if (count < 0 || count >= sizeof (jp2_file))
         {
             sprintf (errmsg, "Overflow of jp2_file string");
             error_handler (true, FUNC_NAME, errmsg);
             return (ERROR);
         }
+        cptr = strrchr (jp2_file, '_');
+        strcpy (cptr, "_TCI.jp2");
+        printf ("  Removing TCI jp2: %s\n", jp2_file);
+        unlink (jp2_file);
+
+        /* Also remove the TCI raw band; only exists in the new S2 format */
         cptr = strrchr (jp2_file, '.');
         strcpy (cptr, ".raw");
-
-        /* Remove the source file */
-        printf ("  Removing %s\n", jp2_file);
-        if (unlink (jp2_file) != 0)
-        {
-            sprintf (errmsg, "Deleting source file: %s", jp2_file);
-            error_handler (true, FUNC_NAME, errmsg);
-            return (ERROR);
-        }
+        printf ("  Removing TCI raw: %s\n", jp2_file);
+        unlink (jp2_file);
     }
 
     /* Free the metadata structure */

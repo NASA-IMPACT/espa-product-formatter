@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Fri Jun 17 16:09:19 2016 by generateDS.py version 2.12b.
+# Generated Thu Oct 31 15:50:00 2019 by generateDS.py version 2.12b.
 #
 # Generated with the ESPA modified version of generateDS.py
 # See espa google code project.
@@ -2376,6 +2376,132 @@ class solar_angles(GeneratedsSuper):
 # end class solar_angles
 
 
+class view_angles(GeneratedsSuper):
+    subclass = None
+    superclass = None
+    def __init__(self, zenith=None, azimuth=None, units=None):
+        self.zenith = _cast(float, zenith)
+        self.azimuth = _cast(float, azimuth)
+        self.units = _cast(None, units)
+        pass
+    def factory(*args_, **kwargs_):
+        if view_angles.subclass:
+            return view_angles.subclass(*args_, **kwargs_)
+        else:
+            return view_angles(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_zenith(self): return self.zenith
+    def set_zenith(self, zenith): self.zenith = zenith
+    def get_azimuth(self): return self.azimuth
+    def set_azimuth(self, azimuth): self.azimuth = azimuth
+    def get_units(self): return self.units
+    def set_units(self, units): self.units = units
+    def validate_angleType(self, value):
+        # Validate type angleType, a restriction on xs:float.
+        pass
+    def validate_projectionUnitsType(self, value):
+        # Validate type projectionUnitsType, a restriction on xs:string.
+        pass
+    def hasContent_(self):
+        if (
+
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespace_='', name_='view_angles', namespacedef_='', pretty_print=True):
+        # Check if we are at the root level and output the XML header
+        if level == 0:
+            outfile.write('<?xml version="1.0"?>\n')
+            outfile.write('\n')
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        showIndent(outfile, level, pretty_print)
+        # Check if we are at the root level and output attributes first before namespacedef
+        if level == 0:
+            outfile.write('<%s%s' % (namespace_, name_))
+            already_processed = set()
+            self.exportAttributes(outfile, level, already_processed, namespace_, name_='view_angles')
+            outfile.write('%s' % (namespacedef_ and ' ' + namespacedef_ or ''))
+        else:
+            outfile.write('<%s%s%s' % (namespace_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+            already_processed = set()
+            self.exportAttributes(outfile, level, already_processed, namespace_, name_='view_angles')
+        if self.hasContent_():
+            outfile.write('>%s' % (eol_, ))
+            self.exportChildren(outfile, level + 1, namespace_='', name_='view_angles', pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespace_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def exportAttributes(self, outfile, level, already_processed, namespace_='', name_='view_angles'):
+        if self.zenith is not None and 'zenith' not in already_processed:
+            already_processed.add('zenith')
+            outfile.write(' zenith="%s"' % self.gds_format_float(self.zenith, input_name='zenith'))
+        if self.azimuth is not None and 'azimuth' not in already_processed:
+            already_processed.add('azimuth')
+            outfile.write(' azimuth="%s"' % self.gds_format_float(self.azimuth, input_name='azimuth'))
+        if self.units is not None and 'units' not in already_processed:
+            already_processed.add('units')
+            outfile.write(' units=%s' % (quote_attrib(self.units), ))
+    def exportChildren(self, outfile, level, namespace_='', name_='view_angles', fromsubclass_=False, pretty_print=True):
+        pass
+    def exportLiteral(self, outfile, level, name_='view_angles'):
+        level += 1
+        already_processed = set()
+        self.exportLiteralAttributes(outfile, level, already_processed, name_)
+        if self.hasContent_():
+            self.exportLiteralChildren(outfile, level, name_)
+    def exportLiteralAttributes(self, outfile, level, already_processed, name_):
+        if self.zenith is not None and 'zenith' not in already_processed:
+            already_processed.add('zenith')
+            showIndent(outfile, level)
+            outfile.write('zenith=%f,\n' % (self.zenith,))
+        if self.azimuth is not None and 'azimuth' not in already_processed:
+            already_processed.add('azimuth')
+            showIndent(outfile, level)
+            outfile.write('azimuth=%f,\n' % (self.azimuth,))
+        if self.units is not None and 'units' not in already_processed:
+            already_processed.add('units')
+            showIndent(outfile, level)
+            outfile.write('units="%s",\n' % (self.units,))
+    def exportLiteralChildren(self, outfile, level, name_):
+        pass
+    def build(self, node):
+        already_processed = set()
+        self.buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self.buildChildren(child, node, nodeName_)
+        return self
+    def buildAttributes(self, node, attrs, already_processed):
+        value = find_attr_value_('zenith', node)
+        if value is not None and 'zenith' not in already_processed:
+            already_processed.add('zenith')
+            try:
+                self.zenith = float(value)
+            except ValueError, exp:
+                raise ValueError('Bad float/double attribute (zenith): %s' % exp)
+            self.validate_angleType(self.zenith)    # validate type angleType
+        value = find_attr_value_('azimuth', node)
+        if value is not None and 'azimuth' not in already_processed:
+            already_processed.add('azimuth')
+            try:
+                self.azimuth = float(value)
+            except ValueError, exp:
+                raise ValueError('Bad float/double attribute (azimuth): %s' % exp)
+            self.validate_angleType(self.azimuth)    # validate type angleType
+        value = find_attr_value_('units', node)
+        if value is not None and 'units' not in already_processed:
+            already_processed.add('units')
+            self.units = value
+            self.validate_projectionUnitsType(self.units)    # validate type projectionUnitsType
+    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False):
+        pass
+# end class view_angles
+
+
 class wrs(GeneratedsSuper):
     subclass = None
     superclass = None
@@ -3295,7 +3421,7 @@ class percent_coverage(GeneratedsSuper):
 class band(GeneratedsSuper):
     subclass = None
     superclass = None
-    def __init__(self, product=None, source=None, name=None, category=None, data_type=None, nlines=None, nsamps=None, fill_value=None, saturate_value=None, scale_factor=None, add_offset=None, short_name=None, long_name=None, file_name=None, pixel_size=None, resample_method=None, data_units=None, valid_range=None, radiance=None, reflectance=None, thermal_const=None, bitmap_description=None, class_values=None, qa_description=None, percent_coverage=None, app_version=None, production_date=None):
+    def __init__(self, product=None, source=None, name=None, category=None, data_type=None, nlines=None, nsamps=None, fill_value=None, saturate_value=None, scale_factor=None, add_offset=None, short_name=None, long_name=None, file_name=None, pixel_size=None, resample_method=None, data_units=None, valid_range=None, radiance=None, reflectance=None, thermal_const=None, bitmap_description=None, class_values=None, qa_description=None, percent_coverage=None, app_version=None, level1_filename=None, production_date=None):
         self.product = _cast(None, product)
         self.source = _cast(None, source)
         self.name = _cast(None, name)
@@ -3322,6 +3448,7 @@ class band(GeneratedsSuper):
         self.qa_description = qa_description
         self.percent_coverage = percent_coverage
         self.app_version = app_version
+        self.level1_filename = level1_filename
         if isinstance(production_date, basestring):
             initvalue_ = datetime_.datetime.strptime(production_date, '%Y-%m-%dT%H:%M:%S')
         else:
@@ -3363,6 +3490,8 @@ class band(GeneratedsSuper):
     def set_percent_coverage(self, percent_coverage): self.percent_coverage = percent_coverage
     def get_app_version(self): return self.app_version
     def set_app_version(self, app_version): self.app_version = app_version
+    def get_level1_filename(self): return self.level1_filename
+    def set_level1_filename(self, level1_filename): self.level1_filename = level1_filename
     def get_production_date(self): return self.production_date
     def set_production_date(self, production_date): self.production_date = production_date
     def get_product(self): return self.product
@@ -3410,6 +3539,7 @@ class band(GeneratedsSuper):
             self.qa_description is not None or
             self.percent_coverage is not None or
             self.app_version is not None or
+            self.level1_filename is not None or
             self.production_date is not None
         ):
             return True
@@ -3518,6 +3648,9 @@ class band(GeneratedsSuper):
         if self.app_version is not None:
             showIndent(outfile, level, pretty_print)
             outfile.write('<%sapp_version>%s</%sapp_version>%s' % (namespace_, self.gds_format_string(quote_xml(self.app_version).encode(ExternalEncoding), input_name='app_version'), namespace_, eol_))
+        if self.level1_filename is not None:
+            showIndent(outfile, level, pretty_print)
+            outfile.write('<%slevel1_filename>%s</%slevel1_filename>%s' % (namespace_, self.gds_format_string(quote_xml(self.level1_filename).encode(ExternalEncoding), input_name='level1_filename'), namespace_, eol_))
         if self.production_date is not None:
             showIndent(outfile, level, pretty_print)
             outfile.write('<%sproduction_date>%s</%sproduction_date>%s' % (namespace_, self.gds_format_datetime(self.production_date, input_name='production_date'), namespace_, eol_))
@@ -3642,6 +3775,9 @@ class band(GeneratedsSuper):
         if self.app_version is not None:
             showIndent(outfile, level)
             outfile.write('app_version=%s,\n' % quote_python(self.app_version).encode(ExternalEncoding))
+        if self.level1_filename is not None:
+            showIndent(outfile, level)
+            outfile.write('level1_filename=%s,\n' % quote_python(self.level1_filename).encode(ExternalEncoding))
         if self.production_date is not None:
             showIndent(outfile, level)
             outfile.write('production_date=model_.GeneratedsSuper.gds_parse_datetime("%s"),\n' % self.gds_format_datetime(self.production_date, input_name='production_date'))
@@ -3778,6 +3914,10 @@ class band(GeneratedsSuper):
             app_version_ = child_.text
             app_version_ = self.gds_validate_string(app_version_, node, 'app_version')
             self.app_version = app_version_
+        elif nodeName_ == 'level1_filename':
+            level1_filename_ = child_.text
+            level1_filename_ = self.gds_validate_string(level1_filename_, node, 'level1_filename')
+            self.level1_filename = level1_filename_
         elif nodeName_ == 'production_date':
             sval_ = child_.text
             dval_ = self.gds_parse_datetime(sval_)
@@ -3903,7 +4043,7 @@ class espa_metadata(GeneratedsSuper):
 class global_metadataType(GeneratedsSuper):
     subclass = None
     superclass = None
-    def __init__(self, data_provider=None, satellite=None, instrument=None, acquisition_date=None, scene_center_time=None, level1_production_date=None, solar_angles=None, earth_sun_distance=None, wrs=None, modis=None, product_id=None, lpgs_metadata_file=None, corner=None, bounding_coordinates=None, projection_information=None, orientation_angle=None):
+    def __init__(self, data_provider=None, satellite=None, instrument=None, acquisition_date=None, scene_center_time=None, level1_production_date=None, solar_angles=None, view_angles=None, earth_sun_distance=None, wrs=None, modis=None, product_id=None, lpgs_metadata_file=None, corner=None, bounding_coordinates=None, projection_information=None, orientation_angle=None):
         self.data_provider = data_provider
         self.satellite = satellite
         self.instrument = instrument
@@ -3923,6 +4063,7 @@ class global_metadataType(GeneratedsSuper):
             initvalue_ = level1_production_date
         self.level1_production_date = initvalue_
         self.solar_angles = solar_angles
+        self.view_angles = view_angles
         self.earth_sun_distance = earth_sun_distance
         self.wrs = wrs
         self.modis = modis
@@ -3955,6 +4096,8 @@ class global_metadataType(GeneratedsSuper):
     def set_level1_production_date(self, level1_production_date): self.level1_production_date = level1_production_date
     def get_solar_angles(self): return self.solar_angles
     def set_solar_angles(self, solar_angles): self.solar_angles = solar_angles
+    def get_view_angles(self): return self.view_angles
+    def set_view_angles(self, view_angles): self.view_angles = view_angles
     def get_earth_sun_distance(self): return self.earth_sun_distance
     def set_earth_sun_distance(self, earth_sun_distance): self.earth_sun_distance = earth_sun_distance
     def get_wrs(self): return self.wrs
@@ -3984,6 +4127,7 @@ class global_metadataType(GeneratedsSuper):
             self.scene_center_time is not None or
             self.level1_production_date is not None or
             self.solar_angles is not None or
+            self.view_angles is not None or
             self.earth_sun_distance is not None or
             self.wrs is not None or
             self.modis is not None or
@@ -4051,6 +4195,8 @@ class global_metadataType(GeneratedsSuper):
             outfile.write('<%slevel1_production_date>%s</%slevel1_production_date>%s' % (namespace_, self.gds_format_datetime(self.level1_production_date, input_name='level1_production_date'), namespace_, eol_))
         if self.solar_angles is not None:
             self.solar_angles.export(outfile, level, namespace_, name_='solar_angles', pretty_print=pretty_print)
+        if self.view_angles is not None:
+            self.view_angles.export(outfile, level, namespace_, name_='view_angles', pretty_print=pretty_print)
         if self.earth_sun_distance is not None:
             showIndent(outfile, level, pretty_print)
             outfile.write('<%searth_sun_distance>%s</%searth_sun_distance>%s' % (namespace_, self.gds_format_float(self.earth_sun_distance, input_name='earth_sun_distance'), namespace_, eol_))
@@ -4104,6 +4250,12 @@ class global_metadataType(GeneratedsSuper):
             showIndent(outfile, level)
             outfile.write('solar_angles=model_.solar_angles(\n')
             self.solar_angles.exportLiteral(outfile, level)
+            showIndent(outfile, level)
+            outfile.write('),\n')
+        if self.view_angles is not None:
+            showIndent(outfile, level)
+            outfile.write('view_angles=model_.view_angles(\n')
+            self.view_angles.exportLiteral(outfile, level)
             showIndent(outfile, level)
             outfile.write('),\n')
         if self.earth_sun_distance is not None:
@@ -4192,6 +4344,10 @@ class global_metadataType(GeneratedsSuper):
             obj_ = solar_angles.factory()
             obj_.build(child_)
             self.solar_angles = obj_
+        elif nodeName_ == 'view_angles':
+            obj_ = view_angles.factory()
+            obj_.build(child_)
+            self.view_angles = obj_
         elif nodeName_ == 'earth_sun_distance':
             sval_ = child_.text
             try:
@@ -4533,10 +4689,10 @@ def validate_xml(rootObj, xmlns=None, xmlns_xsi=None, schema_uri=None):
 
 # ESPA - Added a module method to allow exporting from the module level with
 #        validation
-def export(outFile, rootObj, xmlns='http://espa.cr.usgs.gov/v2', xmlns_xsi='http://www.w3.org/2001/XMLSchema-instance', schema_uri='http://espa.cr.usgs.gov/schema/espa_internal_metadata_v2_0.xsd'):
+def export(outFile, rootObj, xmlns='http://espa.cr.usgs.gov/v2', xmlns_xsi='http://www.w3.org/2001/XMLSchema-instance', schema_uri='http://espa.cr.usgs.gov/schema/espa_internal_metadata_v2_2.xsd'):
     ns_def = build_ns_def(xmlns, xmlns_xsi, schema_uri)
 
-    rootObj.set_version('2.0.0')
+    rootObj.set_version('2.35.0')
 
     xml_text = ''
     try:
@@ -4590,5 +4746,6 @@ __all__ = [
     "thermal_const",
     "utm_proj_params",
     "valid_range",
+    "view_angles",
     "wrs"
 ]
