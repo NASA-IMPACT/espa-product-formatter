@@ -75,7 +75,7 @@ int write_metadata
         "xmlns=\"%s\"\n"
         "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
         "xsi:schemaLocation=\"%s %s\">\n\n", ESPA_SCHEMA_VERSION, ESPA_NS,
-        ESPA_SCHEMA_LOCATION, ESPA_SCHEMA);
+        ESPA_SCHEMA_LOCATION, LOCAL_ESPA_SCHEMA);
 
     /* Write the global metadata */
     fprintf (fptr,
