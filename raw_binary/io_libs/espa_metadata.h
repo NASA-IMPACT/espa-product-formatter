@@ -32,7 +32,7 @@ NOTES:
 #define ESPA_SCHEMA_VERSION "2.2"
 #define ESPA_NS "http://espa.cr.usgs.gov/v2"
 #define ESPA_SCHEMA_LOCATION "http://espa.cr.usgs.gov/v2"
-#define ESPA_SCHEMA "http://espa.cr.usgs.gov/schema/espa_internal_metadata_v2_2.xsd"
+#define ESPA_SCHEMA "https://espa-schema.s3-us-west-2.amazonaws.com/espa_internal_metadata_v2_2.xsd"
 #define LOCAL_ESPA_SCHEMA "/usr/local/espa-product-formatter/schema/espa_internal_metadata_v2_2.xsd"
 
 /* Data types */
