@@ -52,6 +52,7 @@ FILE *open_raw_binary
     rb_fptr = fopen (infile, access_type);
     if (rb_fptr == NULL)
     {
+      perror("Error occurred opening raw binary file");
         sprintf (errmsg, "Opening raw binary file %s with %s access.",
             infile, access_type);
         error_handler (true, FUNC_NAME, errmsg);
@@ -114,6 +115,7 @@ int write_raw_binary
     nvals = fwrite (img_array, size, nlines * nsamps, rb_fptr);
     if (nvals != nlines * nsamps)
     {
+        perror("Error occurred writing to raw binary file");
         sprintf (errmsg, "Writing %d elements of %d bytes in size to the "
             "raw binary file. Actually wrote %ld elements.", nlines * nsamps,
             size, nvals);
@@ -158,6 +160,7 @@ int read_raw_binary
     nvals = fread (img_array, size, nlines * nsamps, rb_fptr);
     if (nvals != nlines * nsamps)
     {
+        perror("Error occurred reading raw binary file");
         sprintf (errmsg, "Reading %d elements of %d bytes in size from the "
             "raw binary file. Actually read %ld elements.", nlines * nsamps,
             size, nvals);
