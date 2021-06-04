@@ -17,6 +17,9 @@ NOTES:
 *****************************************************************************/
 
 #include "error_handler.h"
+#include <execinfo.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /******************************************************************************
 MODULE:  error_handler
@@ -33,6 +36,24 @@ Date         Programmer       Reason
 
 NOTES:
 ******************************************************************************/
+void print_trace (void)
+{
+  void *array[10];
+  char **strings;
+  int size, i;
+
+  size = backtrace (array, 10);
+  strings = backtrace_symbols (array, size);
+  if (strings != NULL)
+  {
+    printf ("Obtained %d stack frames.\n", size);
+    for (i = 0; i < size; i++)
+      printf ("%s\n", strings[i]);
+  }
+
+  free (strings);
+}
+
 void error_handler
 (
     bool error_flag,  /* I: true for errors, false for warnings */
@@ -42,7 +63,10 @@ void error_handler
 )
 {
     if (error_flag)
+    {
+        print_trace ();
         printf ("Error: %s : %s\n\n", module, errmsg);
+    }
     else
         printf ("Warning: %s : %s\n", module, errmsg);
 }
