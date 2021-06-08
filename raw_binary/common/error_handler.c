@@ -36,20 +36,21 @@ Date         Programmer       Reason
 
 NOTES:
 ******************************************************************************/
+
 void print_trace (void)
 {
-  void *array[10];
+  void *array[20];
+  size_t size;
   char **strings;
-  int size, i;
+  size_t i;
 
-  size = backtrace (array, 10);
+  size = backtrace (array, 20);
   strings = backtrace_symbols (array, size);
-  if (strings != NULL)
-  {
-    printf ("Obtained %d stack frames.\n", size);
-    for (i = 0; i < size; i++)
-      printf ("%s\n", strings[i]);
-  }
+
+  printf ("Obtained %zd stack frames.\n", size);
+
+  for (i = 0; i < size; i++)
+     printf ("%s\n", strings[i]);
 
   free (strings);
 }
@@ -64,8 +65,8 @@ void error_handler
 {
     if (error_flag)
     {
-        print_trace ();
         printf ("Error: %s : %s\n\n", module, errmsg);
+        print_trace ();
     }
     else
         printf ("Warning: %s : %s\n", module, errmsg);
