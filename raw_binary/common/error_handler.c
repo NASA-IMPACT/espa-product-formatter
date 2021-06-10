@@ -65,8 +65,8 @@ void error_handler
 {
     if (error_flag)
     {
-        printf ("Error: %s : %s\n\n", module, errmsg);
         print_trace ();
+        printf ("Error: %s : %s\n\n", module, errmsg);
     }
     else
         printf ("Warning: %s : %s\n", module, errmsg);
